@@ -18,3 +18,4 @@ class Image:
     def rgb_from_yuv(yuv):
         return yuv @ rgb_from_yuv.T.astype(arr.dtype)
 
+Image.yuv_from_rgb('rgb')
