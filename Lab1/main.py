@@ -24,8 +24,9 @@ class Image:
 
     @staticmethod
     def downsize(image_file_name, ratio = 2):
+        # -vf scale= is used to downscale the image iw and ih are image width and height, which get divided by ratio
         command = 'ffmpeg -i {} -vf scale=iw/{}:ih/{} small{} -y'
-        command = command.format(image_file_name, ratio, ratio, image_file_name)  # Replace 'image.jpg' with your actual file name.
+        command = command.format(image_file_name, ratio, ratio, image_file_name)
         subprocess.run(command.split(sep=' '), shell=True)
 
 
@@ -35,4 +36,4 @@ rgb2 = Image.rgb_from_yuv(yuv)
 print(yuv)
 print(rgb2)
 
-Image.downsize("1.png", 3)
+Image.downsize("img.png", 3)
