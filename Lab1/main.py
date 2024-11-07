@@ -29,6 +29,32 @@ class Image:
         command = command.format(image_file_name, ratio, ratio, image_file_name)
         subprocess.run(command.split(sep=' '), shell=True)
 
+    #Do it with matrix of bytes, not file
+    @staticmethod
+    def serpentine(file):
+        file_1D = []
+        rows, cols = len(file), len(file[0])
+        for diag in range(rows+cols-1): #Number of diagonals in mxn matrix is m + n -1
+            if diag % 2 == 0:
+                row = min(diag, rows - 1)
+                col = diag - row
+                while row >= 0 and col < cols:
+                    file_1D.append(file[row][col])
+                    row -= 1
+                    col += 1      
+            else:
+                col = min(diag, cols - 1)
+                row = diag - col
+                while col >= 0 and row < rows:
+                    file_1D.append(file[row][col])
+                    row += 1
+                    col -= 1
+        return file_1D
+        #alternar diagonal_pos i diagonal_neg
+        #començar per pos, dreta, neg, abaix, pos, dreta...
+
+
+        
 
     @staticmethod
     def compress_hard(image_file_name):
