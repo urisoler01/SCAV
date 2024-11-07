@@ -41,7 +41,20 @@ class Image:
 
     @staticmethod
     def run_length_encoding(bytes):
+        zeros = 0
+        encoded_bytes = []
+        for byte in bytes:
+            if byte == 0:
+                zeros += 1
+            else:
+                if zeros > 0:
+                    encoded_bytes.append(0)
+                    encoded_bytes.append(zeros)
 
+                encoded_bytes.append(byte)
+                zeros = 0
+
+        return encoded_bytes
 
 
 rgb = np.array([100, 54, 206])
@@ -54,4 +67,10 @@ Image.downsize("img.png", 3)
 
 Image.compress_hard("img.png")
 
-# docker pull jrottenberg/ffmpeg:4.4-alpine
+rle = [0,0,0,5,4,70,0,0,2,0,45,9,0,0,0,8]
+print(rle)
+print(Image.run_length_encoding(rle))
+
+# docker run jrottenberg/ffmpeg:4.4-alpine
+# docker save jrottenberg/ffmpeg > file.tar
+# docker load < file.tar
