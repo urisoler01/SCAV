@@ -39,6 +39,9 @@ class Image:
         subprocess.run(command.split(sep=' '), shell=True)
 
 
+    @staticmethod
+    def run_length_encoding(bytes):
+
 
 
 rgb = np.array([100, 54, 206])
@@ -50,3 +53,5 @@ print(rgb2)
 Image.downsize("img.png", 3)
 
 Image.compress_hard("img.png")
+
+# docker pull jrottenberg/ffmpeg:4.4-alpine
