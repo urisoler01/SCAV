@@ -6,35 +6,37 @@ import dct_test
 import dwt_test
 
 class Image:
-    #Values obtained from:
-    # https://softpixel.com/~cwright/programming/colorspace/yuv/
-    yuv_from_rgb_mat = np.array(
+    yuv_from_rgb_mat = (1/255) * np.array(
         [
-            [0.299, 0.587, 0.114],
-            [-0.168736, -0.331264, 0.500],
-            [0.500, -0.418688, -0.081312],
+            [66.5, 129, 25],
+            [-38, -74, 112],
+            [112, -94, -18],
         ]
     )
 
-    rgb_from_yuv_mat = np.array(
+    '''rgb_from_yuv_mat = np.array(
         [
-            [1, 0, 1.4075],
-            [1, -0.3455, -0.7169],
-            [1, 1.779, 0]
+            [1, 0, 1.13983],
+            [1, -0.39465, -0.58060],
+            [1, 2.03211, 0]
         ]
-    )
+    )'''
+
+    rgb_from_yuv_mat = np.linalg.inv(yuv_from_rgb_mat)
 
     # Offset arrays for the YUV and RGB conversions
-    yuv_offset = np.array([0, 128, 128])
+    yuv_offset = np.array([16, 128, 128])
 
     @staticmethod
     def yuv_from_rgb(rgb):     
-        return (rgb @ Image.yuv_from_rgb_mat.T) + Image.yuv_offset
+        yuv = (rgb @ Image.yuv_from_rgb_mat.T) + Image.yuv_offset
+        return yuv.astype(int)
 
     @staticmethod
     def rgb_from_yuv(yuv):
-        return (yuv - Image.yuv_offset) @ Image.rgb_from_yuv_mat.T
-
+        rgb = (yuv - Image.yuv_offset) @ Image.rgb_from_yuv_mat.T
+        return rgb.astype(int)
+    
     @staticmethod
     def downsize(image_file_name, ratio = 2):
         # Get the absolute path based on the script's directory

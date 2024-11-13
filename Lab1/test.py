@@ -11,19 +11,23 @@ from dct import DCT as DCT
 
 # Test for Image class
 class TestImage(unittest.TestCase):
-
+    
+    #Check values in https://www.calculatormix.com/conversions/color/rgb-to-yuv/
     def test_yuv_from_rgb(self):
         rgb = np.array([255, 0, 0])  # Red color in RGB
-        expected_yuv = np.array([76, 84, 255])  # Expected YUV for red
+        expected_yuv = np.array([82, 90, 240])  # Expected YUV for red
         result = Image.yuv_from_rgb(rgb)
         np.testing.assert_almost_equal(result, expected_yuv, decimal=2)
 
     def test_rgb_from_yuv(self):
-        yuv = np.array([76.245, 84.037, 255.0])  # Red color in YUV
-        expected_rgb = np.array([255, 0, 0])  # Expected RGB for red
+        yuv = np.array([145, 54, 34])  # Red color in YUV
+        expected_rgb = np.array([0, 255, 0])  # Expected RGB for red
         result = Image.rgb_from_yuv(yuv)
         np.testing.assert_almost_equal(result, expected_rgb, decimal=2)
+    
 
+    #This unit test doesn't make sense as we would compare a downsized image probably
+    #extracted from ffmpeg to a image already generated with ffmpeg but inside a python file
     @patch('subprocess.run')
     def test_downsize(self, mock_run):
         # Mock the subprocess call to avoid actual file manipulation
@@ -38,6 +42,8 @@ class TestImage(unittest.TestCase):
         result = Image.serpentine(file)
         self.assertEqual(result, expected_result)
 
+    #This unit test doesn't make sense as we would compare a compressed image probably
+    #extracted from ffmpeg to a image already generated with ffmpeg but inside a python file
     @patch('subprocess.run')
     def test_compress_hard(self, mock_run):
         # Mock the subprocess call to avoid actual file manipulation
