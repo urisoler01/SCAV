@@ -14,14 +14,6 @@ class Image:
         ]
     )
 
-    '''rgb_from_yuv_mat = np.array(
-        [
-            [1, 0, 1.13983],
-            [1, -0.39465, -0.58060],
-            [1, 2.03211, 0]
-        ]
-    )'''
-
     rgb_from_yuv_mat = np.linalg.inv(yuv_from_rgb_mat)
 
     # Offset arrays for the YUV and RGB conversions

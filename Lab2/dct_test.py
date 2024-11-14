@@ -5,7 +5,7 @@ import numpy as np
 # Add the directory to the Python path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-from Lab1.dct import DCT
+from dct import DCT
 
 def test_dct_instance_method():
     input_data = [1, 2, 3, 4, 5]
