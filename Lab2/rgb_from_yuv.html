@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YUV to RGB Converter</title>
+    <script>
+        // Function to send the POST request
+        async function convertYUVToRGB() {
+            const yuv = [
+                parseInt(document.getElementById("y").value),
+                parseInt(document.getElementById("u").value),
+                parseInt(document.getElementById("v").value)
+            ];
+
+            if (yuv.some(val => isNaN(val) || val < 0 || val > 255)) {
+                alert("Please enter valid YUV values between 0 and 255.");
+                return;
+            }
+
+            const payload = { yuv: yuv };
+
+            try {
+                const response = await fetch("http://localhost:8000/rgb_from_yuv", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(payload)
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    document.getElementById("result").innerHTML = `
+                        R: ${data.rgb[0]}<br>
+                        G: ${data.rgb[1]}<br>
+                        B: ${data.rgb[2]}
+                    `;
+                } else {
+                    alert(`Error: ${data.detail}`);
+                }
+            } catch (error) {
+                console.error("Error:", error);
+                alert("Failed to fetch RGB data.");
+            }
+        }
+    </script>
+</head>
+<body>
+    <h1>YUV to RGB Converter</h1>
+
+    <form onsubmit="event.preventDefault(); convertYUVToRGB();">
+        <label for="y">Y:</label>
+        <input type="number" id="y" min="0" max="255" required><br><br>
+
+        <label for="u">U:</label>
+        <input type="number" id="u" min="0" max="255" required><br><br>
+
+        <label for="v">V:</label>
+        <input type="number" id="v" min="0" max="255" required><br><br>
+
+        <button type="submit">Convert to RGB</button>
+    </form>
+
+    <h3>RGB Result:</h3>
+    <div id="result"></div>
+
+    <!-- Arrows for navigation -->
+    <div>
+        <a href="/yuv_from_rgb">
+            <button>RGB to YUV</button>
+        </a>
+    </div>
+</body>
+</html>
