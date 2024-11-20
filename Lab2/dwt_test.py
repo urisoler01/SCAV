@@ -5,7 +5,7 @@ import numpy as np
 # Add the directory to the Python path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-from Lab1.dwt import DWT
+from dwt import DWT
 
 def test_dwt_instance_method():
     input_data = [1, 2, 3, 4, 5]

@@ -1,22 +1,29 @@
-# Dockerfile
+# For more information, please refer to https://aka.ms/vscode-docker-python
+FROM python:3-slim
 
-# Use an official Python runtime as a parent image
-FROM python:3.9-slim
+ENV PIP_DISABLE_PIP_VERSION_CHECK=1
 
-# Set the working directory in the container
+# Keeps Python from generating .pyc files in the container
+ENV PYTHONDONTWRITEBYTECODE=1
+
+# Turns off buffering for easier container logging
+ENV PYTHONUNBUFFERED=1
+
 WORKDIR /app
+COPY . /app
 
-# Copy the requirements file into the container
+# Install pip requirements
 COPY requirements.txt .
+RUN python -m venv venv
+# Install ffmpeg
+RUN apt-get update && apt-get install -y ffmpeg
+RUN python -m pip install -r requirements.txt
 
-# Install dependencies
-RUN pip install --no-cache-dir -r requirements.txt
+RUN /bin/bash -c "source venv/bin/activate"
 
-# Copy the rest of the application code
 COPY . .
 
-# Expose port 8000 for the FastAPI app
 EXPOSE 8000
 
-# Command to run the app with Uvicorn
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uvicorn", "main:app", "--reload", "--host", "0.0.0.0", "--port", "8000"]
+

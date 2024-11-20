@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Serpentine Matrix Transformation</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            text-align: center;
+        }
+        h1 {
+            color: #2C3E50;
+        }
+        select, input[type="number"] {
+            padding: 5px;
+            margin: 10px;
+        }
+        .matrix-container {
+            display: grid;
+            gap: 5px;
+            margin: 20px 0;
+            justify-content: center;
+            margin-bottom: 30px;
+        }
+        .matrix-container input {
+            width: 50px;
+            height: 30px;
+            text-align: center;
+        }
+        #serpentine-result {
+            margin-top: 20px;
+            font-family: monospace;
+            white-space: normal; /* Allow wrapping for serpentine output */
+            text-align: center;
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            background-color: #f9f9f9;
+        }
+        #serpentine-result .serpentine-row {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            width: 100%;
+        }
+        #serpentine-result .serpentine-row span {
+            width: 50px;
+            height: 30px;
+            display: inline-block;
+            text-align: center;
+            margin: 3px;
+            font-size: 14px;
+        }
+        button {
+            margin-top: 20px;
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 5px;
+        }
+        button:hover {
+            background-color: #2980b9;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Serpentine Matrix Transformation</h1>
+
+    <label for="matrix-size">Select Matrix Size (NxN):</label>
+    <select id="matrix-size" onchange="generateMatrixInput()">
+        <option value="3">3x3</option>
+        <option value="4">4x4</option>
+        <option value="5">5x5</option>
+        <option value="6">6x6</option>
+        <option value="7">7x7</option>
+        <option value="8">8x8</option>
+        <option value="9">9x9</option>
+        <option value="10">10x10</option>
+        <option value="11">11x11</option>
+        <option value="12">12x12</option>
+        <option value="13">13x13</option>
+        <option value="14">14x14</option>
+        <option value="15">15x15</option>
+        <option value="16">16x16</option>
+        <option value="17">17x17</option>
+        <option value="18">18x18</option>
+        <option value="19">19x19</option>
+        <option value="20">20x20</option>
+    </select>
+
+    <div id="matrix-container" class="matrix-container"></div>
+
+    <button onclick="computeSerpentine()">Compute Serpentine</button>
+    <button onclick="generateRandomMatrix()">Randomize Matrix</button>
+
+    <div id="serpentine-result"></div>
+
+    <script>
+        function generateMatrixInput() {
+            const matrixSize = parseInt(document.getElementById('matrix-size').value);
+            const matrixContainer = document.getElementById('matrix-container');
+            matrixContainer.innerHTML = ''; // Clear previous matrix inputs
+
+            // Set grid display based on the matrix size
+            matrixContainer.style.gridTemplateColumns = `repeat(${matrixSize}, 50px)`;
+
+            // Create the matrix of input fields
+            for (let row = 0; row < matrixSize; row++) {
+                for (let col = 0; col < matrixSize; col++) {
+                    const input = document.createElement('input');
+                    input.type = 'number';
+                    input.id = `matrix-${row}-${col}`;
+                    input.placeholder = '0';
+                    matrixContainer.appendChild(input);
+                }
+            }
+        }
+
+        function generateRandomMatrix() {
+            const matrixSize = parseInt(document.getElementById('matrix-size').value);
+            for (let row = 0; row < matrixSize; row++) {
+                for (let col = 0; col < matrixSize; col++) {
+                    const randomValue = Math.floor(Math.random() * 11); // Random number from 0 to 10
+                    document.getElementById(`matrix-${row}-${col}`).value = randomValue;
+                }
+            }
+        }
+
+        async function computeSerpentine() {
+            const matrixSize = parseInt(document.getElementById('matrix-size').value);
+            const matrix = [];
+
+            // Build the matrix from the input fields
+            for (let row = 0; row < matrixSize; row++) {
+                const rowArr = [];
+                for (let col = 0; col < matrixSize; col++) {
+                    const value = parseInt(document.getElementById(`matrix-${row}-${col}`).value) || 0;
+                    rowArr.push(value);
+                }
+                matrix.push(rowArr);
+            }
+
+            // Send the matrix data to the backend
+            const response = await fetch('/serpentine', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ file: matrix })
+            });
+
+            if (!response.ok) {
+                const error = await response.json();
+                alert('Error: ' + error.detail);
+                return;
+            }
+
+            const result = await response.json();
+
+            // Display the serpentine result
+            displayResult(result.serpentine);
+        }
+
+        function displayResult(serpentine) {
+            const resultContainer = document.getElementById('serpentine-result');
+            resultContainer.innerHTML = `<h3>Serpentine Output</h3>`;
+            
+            // Display serpentine result in rows
+            let row = document.createElement('div');
+            row.classList.add('serpentine-row');
+
+            serpentine.forEach((item, index) => {
+                const span = document.createElement('span');
+                span.textContent = item;
+                row.appendChild(span);
+
+                // After every 20 elements, create a new row
+                if ((index + 1) % 20 === 0) {
+                    resultContainer.appendChild(row);
+                    row = document.createElement('div');
+                    row.classList.add('serpentine-row');
+                }
+            });
+
+            // Append the final row if there are remaining elements
+            if (row.children.length > 0) {
+                resultContainer.appendChild(row);
+            }
+        }
+
+        // Initialize the page with a default matrix
+        generateMatrixInput();
+    </script>
+
+</body>
+</html>

@@ -5,7 +5,7 @@ import os
 from unittest.mock import patch
 from scipy import linalg
 import subprocess
-from image import Image as Image
+from Lab2.main import Image as Image
 from dwt import DWT as DWT
 from dct import DCT as DCT
 

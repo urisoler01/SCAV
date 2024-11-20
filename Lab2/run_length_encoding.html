@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Run-Length Encoding</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            text-align: center;
+        }
+        h1 {
+            color: #2C3E50;
+        }
+        input[type="number"] {
+            padding: 5px;
+            margin: 10px;
+            width: 100px;
+        }
+        button {
+            padding: 10px 20px;
+            background-color: #2C3E50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        button:hover {
+            background-color: #34495E;
+        }
+        #encoded-result {
+            margin-top: 20px;
+            font-size: 1.2em;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Run-Length Encoding (Byte Sequence)</h1>
+
+    <!-- Form to input number of components -->
+    <label for="num-components">Number of bytes: </label>
+    <input type="number" id="num-components" min="1" max="10" value="5">
+    <button onclick="generateInputs()">Generate Inputs</button>
+
+    <form id="components-form" style="display:none;">
+        <h3>Enter the byte values:</h3>
+        <div id="inputs-container"></div>
+        <button type="button" onclick="randomizeValues()">Randomize Values</button>
+        <button type="submit">Submit for Encoding</button>
+    </form>
+
+    <div id="encoded-result" style="display:none;">
+        <h3>Run-Length Encoded Result</h3>
+        <p id="rle-output"></p>
+    </div>
+
+    <script>
+        // Generate input fields based on the number of components selected
+        function generateInputs() {
+            const numComponents = parseInt(document.getElementById("num-components").value);
+            const container = document.getElementById("inputs-container");
+            container.innerHTML = ""; // Clear previous inputs
+
+            for (let i = 0; i < numComponents; i++) {
+                const inputField = document.createElement("input");
+                inputField.type = "number";
+                inputField.id = `component-${i}`;
+                inputField.placeholder = `Byte ${i + 1}`;
+                inputField.min = 0;
+                inputField.max = 255;
+                container.appendChild(inputField);
+                container.appendChild(document.createElement("br"));
+            }
+
+            // Show the form to input components
+            document.getElementById("components-form").style.display = "block";
+        }
+
+        // Randomize the values in the input fields
+        function randomizeValues() {
+            const numComponents = parseInt(document.getElementById("num-components").value);
+            for (let i = 0; i < numComponents; i++) {
+                const randomValue = Math.floor(Math.random() * 256); // Random number between 0 and 255
+                document.getElementById(`component-${i}`).value = randomValue;
+            }
+        }
+
+        // Handle form submission to encode the input values
+        document.getElementById("components-form").addEventListener("submit", function(event) {
+            event.preventDefault();
+            
+            const components = [];
+            const numComponents = parseInt(document.getElementById("num-components").value);
+
+            for (let i = 0; i < numComponents; i++) {
+                const componentValue = parseInt(document.getElementById(`component-${i}`).value);
+                components.push(componentValue);
+            }
+
+            // Send the input data to the backend for Run-Length Encoding
+            fetch('/run_length_encoding', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ bytes: components }),
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Show the encoded result
+                    document.getElementById("rle-output").textContent = data.encoded_result.join(', ');
+                    document.getElementById("encoded-result").style.display = "block";
+                } else {
+                    alert('Error: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error encoding values');
+            });
+        });
+    </script>
+
+</body>
+</html>
+

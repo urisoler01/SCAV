@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Downsize Image</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            text-align: center;
+        }
+        h1 {
+            color: #2C3E50;
+        }
+        input[type="file"] {
+            margin: 20px;
+        }
+        /* Center the images */
+        #image-preview, #downsized-preview {
+            display: block;
+            max-width: 500px;
+            max-height: 500px;
+            margin: 20px auto; /* This centers the images horizontally */
+        }
+        #download-link {
+            display: none;
+            margin-top: 20px;
+        }
+        button {
+            margin-top: 10px;
+            padding: 10px 20px;
+            background-color: #2C3E50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #34495E;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Image Downsizing (x2)</h1>
+
+    <!-- Image Upload Form -->
+    <form id="image-upload-form" enctype="multipart/form-data">
+        <input type="file" id="image-file" name="image" accept="image/*" required>
+        <button type="submit" id="upload-button">Downsize Image</button>
+    </form> 
+
+    <!-- Preview of Uploaded Image -->
+    <h3>Uploaded Image Preview</h3>
+    <img id="image-preview" src="" alt="No image uploaded yet" style="display:none;">
+
+    <!-- Preview of Downsized Image -->
+    <h3>Downsized Image Preview</h3>
+    <img id="downsized-preview" src="" alt="Downsized image preview" style="display:none;">
+
+    <!-- Download Link for Downsized Image -->
+    <a id="download-link" href="#" download="downsized_image.jpg">Download Downsized Image</a>
+
+    <script>
+        // Show the uploaded image preview
+        document.getElementById('image-file').addEventListener('change', function(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    document.getElementById('image-preview').src = e.target.result;
+                    document.getElementById('image-preview').style.display = 'block';
+                    document.getElementById('downsize-form').style.display = 'block'; // Show downsize button
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // Handle the form submission for uploading the image
+        document.getElementById('image-upload-form').addEventListener('submit', function(event) {
+            event.preventDefault();
+            const formData = new FormData();
+            formData.append('image', document.getElementById('image-file').files[0]);
+
+            fetch('/downsize', {
+                method: 'POST',
+                body: formData,
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Handle the response for downsizing
+                    document.getElementById('downsized-preview').src = data.downsized_image_url;
+                    document.getElementById('downsized-preview').style.display = 'block';
+
+                    // Enable the download link
+                    document.getElementById('download-link').href = data.downsized_image_url;
+                    document.getElementById('download-link').style.display = 'inline-block';
+                } else {
+                    alert('Error: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error uploading image');
+            });
+        });
+
+        // Handle the form submission for downsizing the image
+        document.getElementById('downsize-form').addEventListener('submit', function(event) {
+            event.preventDefault();
+            alert('Downsize image clicked! (You can add your downsize logic here)');
+            // Add downsize functionality here if needed
+        });
+    </script>
+
+</body>
+</html>
