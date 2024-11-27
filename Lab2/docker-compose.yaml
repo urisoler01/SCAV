@@ -7,4 +7,26 @@ services:
     container_name: fastapi-application
     ports:
       - "8000:8000"
-   
+    volumes:
+      - ./uploads:/app/uploads
+      - ./output:/app/output
+    environment:
+      - UPLOAD_DIR=/app/uploads
+      - OUTPUT_DIR=/app/output
+    networks:
+      - bridge
+
+  ffmpeg:
+    image: ffmpeg-image
+    build: ../Lab3/
+    container_name: ffmpeg-container
+    ports:
+      - "1234:1234"
+    volumes:
+      - ./uploads:/app/uploads
+      - ./output:/app/output
+    networks:
+      - bridge
+
+networks:
+  bridge: {}

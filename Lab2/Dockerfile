@@ -19,6 +19,8 @@ RUN python -m venv venv
 RUN apt-get update && apt-get install -y ffmpeg
 RUN python -m pip install -r requirements.txt
 
+RUN apt-get update && apt-get install -y netcat-openbsd
+
 RUN /bin/bash -c "source venv/bin/activate"
 
 COPY . .
