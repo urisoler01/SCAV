@@ -43,7 +43,7 @@
 
     <!-- Form to input number of components -->
     <label for="num-components">Number of bytes: </label>
-    <input type="number" id="num-components" min="1" max="10" value="5">
+    <input type="number" id="num-components" min="1" max="50" value="5">
     <button onclick="generateInputs()">Generate Inputs</button>
 
     <form id="components-form" style="display:none;">
@@ -101,7 +101,6 @@
                 components.push(componentValue);
             }
 
-            // Send the input data to the backend for Run-Length Encoding
             fetch('/run_length_encoding', {
                 method: 'POST',
                 headers: {
@@ -109,23 +108,30 @@
                 },
                 body: JSON.stringify({ bytes: components }),
             })
-            .then(response => response.json())
+            .then(async response => {
+                if (!response.ok) {
+                    const errorDetail = await response.json();
+                    throw new Error(errorDetail.detail || 'Unknown error');
+                }
+                return response.json();
+            })
             .then(data => {
                 if (data.success) {
-                    // Show the encoded result
-                    document.getElementById("rle-output").textContent = data.encoded_result.join(', ');
+                    // Correctly reference data.encoded_result
+                    const encodedResult = data.encoded_result.join(', ');
+                    document.getElementById("rle-output").textContent = encodedResult;
                     document.getElementById("encoded-result").style.display = "block";
                 } else {
                     alert('Error: ' + data.message);
                 }
             })
             .catch(error => {
-                console.error('Error:', error);
-                alert('Error encoding values');
+                alert('Error: ' + error.message);
+                console.error('Error details:', error);
             });
         });
+
     </script>
 
 </body>
 </html>
-

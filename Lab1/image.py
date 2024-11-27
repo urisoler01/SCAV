@@ -104,7 +104,6 @@ class Image:
         # Run the command
         subprocess.run(command)
 
-
     @staticmethod
     def run_length_encoding(bytes):
         zeros = 0
