@@ -166,8 +166,7 @@ async def compress_hard_endpoint(image: UploadFile = File(...)):
 @app.post("/run_length_encoding")
 def run_length_encoding(rle_data: RLEModel):
     try:
-        encoded_result = run_length_encoding(rle_data)
-        
+        encoded_result = Image.run_length_encoding(rle_data)
         return {"success": True, "encoded_result": encoded_result}
     
     except Exception as e:
@@ -175,15 +174,21 @@ def run_length_encoding(rle_data: RLEModel):
 
 
 class Image:
-    yuv_from_rgb_mat = (1/255) * np.array(
+    yuv_from_rgb_mat = np.array(
         [
-            [66.5, 129, 25],
-            [-38, -74, 112],
-            [112, -94, -18],
+            [0.257, 0.504, 0.098],
+            [-0.148, -0.291, 0.439],
+            [0.439, -0.368, -0.071],
         ]
     )
 
-    rgb_from_yuv_mat = np.linalg.inv(yuv_from_rgb_mat)
+    rgb_from_yuv_mat = np.array(
+        [
+            [1.164, 0, 1.596],     # R
+            [1.164, -0.392, -0.813],  # G
+            [1.164, 2.017, 0],     # B
+        ]
+    )
 
     # Offset arrays for the YUV and RGB conversions
     yuv_offset = np.array([16, 128, 128])
@@ -196,6 +201,7 @@ class Image:
     @staticmethod
     def rgb_from_yuv(yuv):
         rgb = (yuv - Image.yuv_offset) @ Image.rgb_from_yuv_mat.T
+        rgb = np.clip(rgb, 0, 255)
         return rgb.astype(int)
     
     @staticmethod
@@ -270,10 +276,11 @@ class Image:
 
 
     @staticmethod
-    def run_length_encoding(bytes):
+    def run_length_encoding(rle_data):
+        input_bytes = rle_data.bytes
         zeros = 0
         encoded_bytes = []
-        for byte in bytes:
+        for byte in input_bytes:
             if byte == 0:
                 zeros += 1
             else:
@@ -283,5 +290,9 @@ class Image:
 
                 encoded_bytes.append(byte)
                 zeros = 0
+            # Check for any trailing zeros after the loop ends
+        if zeros > 0:
+            encoded_bytes.append(0)
+            encoded_bytes.append(zeros)
 
         return encoded_bytes
