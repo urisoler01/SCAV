@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Video Resize</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            text-align: center;
+        }
+        h1 {
+            color: #2C3E50;
+        }
+        input[type="file"] {
+            margin: 20px;
+        }
+        video {
+            display: block;
+            max-width: 100%;
+            margin: 20px auto;
+        }
+        #download-link {
+            display: none;
+            margin-top: 20px;
+        }
+        button, select {
+            margin-top: 10px;
+            padding: 10px 20px;
+            background-color: #2C3E50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:hover, select:hover {
+            background-color: #34495E;
+        }
+        #loading-bar-container {
+            display: none;
+            margin: 20px auto;
+            width: 100%;
+            max-width: 500px;
+            height: 10px;
+            background-color: #ddd;
+            border-radius: 5px;
+            overflow: hidden;
+        }
+        #loading-bar {
+            width: 0;
+            height: 100%;
+            background-color: #2C3E50;
+            transition: width 0.4s;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Video Resizing</h1>
+
+    <!-- Video Upload Form -->
+    <form id="video-upload-form" enctype="multipart/form-data">
+        <label for="video-file">Choose a video file:</label>
+        <input type="file" id="video-file" name="video" accept="video/*" required>
+
+        <label for="resolution">Select Resolution:</label>
+        <select id="resolution" name="resolution" required>
+            <option value="" disabled selected>Select resolution</option>
+            <option value="1920:1080">1920x1080 (Full HD)</option>
+            <option value="1280:720">1280x720 (HD)</option>
+            <option value="854:480">854x480 (SD)</option>
+            <option value="640:360">640x360 (Low)</option>
+            <option value="426:240">426x240 (Very Low)</option>
+        </select>
+
+        <button type="submit" id="resize-button">Resize Video</button>
+    </form>
+
+    <!-- Loading Bar -->
+    <div id="loading-bar-container">
+        <div id="loading-bar"></div>
+    </div>
+
+    <!-- Preview of Original Video -->
+    <h3>Original Video Preview</h3>
+    <video id="original-video" controls style="display:none;"></video>
+
+    <!-- Preview of Resized Video -->
+    <h3>Resized Video Preview</h3>
+    <video id="resized-video" controls style="display:none;"></video>
+
+    <!-- Download Link for Resized Video -->
+    <a id="download-link" href="#" download="resized_video.mp4">Download Resized Video</a>
+
+    <script>
+        // Show the uploaded video preview
+        document.getElementById('video-file').addEventListener('change', function(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const url = URL.createObjectURL(file);
+                const originalVideo = document.getElementById('original-video');
+                originalVideo.src = url;
+                originalVideo.style.display = 'block';
+            }
+        });
+
+        // Handle the form submission for resizing the video
+        document.getElementById('video-upload-form').addEventListener('submit', async function(event) {
+            event.preventDefault();
+
+            const formData = new FormData();
+            const videoFile = document.getElementById('video-file').files[0];
+            const resolution = document.getElementById('resolution').value;
+
+            if (!videoFile) {
+                alert("Please select a video file.");
+                return;
+            }
+
+            formData.append('video', videoFile);
+            formData.append('resolution', resolution);
+
+            formData.forEach((value, key) => {console.log(`${key}: ${value}`);});
+
+            // Show the loading bar
+            const loadingBarContainer = document.getElementById('loading-bar-container');
+            const loadingBar = document.getElementById('loading-bar');
+            loadingBarContainer.style.display = 'block';
+            loadingBar.style.width = '0%';
+
+            // Simulate loading progress
+            let progress = 0;
+            const interval = setInterval(() => {
+                progress += Math.random() * 10;
+                loadingBar.style.width = `${Math.min(progress, 100)}%`;
+                if (progress >= 100) clearInterval(interval);
+            }, 500);
+
+            try {
+                const response = await fetch('/resize_video', {
+                    method: 'POST',
+                    body: formData,
+                });
+                const data = await response.json();
+
+                clearInterval(interval); // Stop progress simulation
+                loadingBar.style.width = '100%'; // Ensure the bar reaches 100%
+                loadingBarContainer.style.display = 'none'; // Hide the loading bar
+
+                if (data.success) {
+                    // Display the resized video
+                    const resizedVideo = document.getElementById('resized-video');
+                    resizedVideo.src = data.resized_video_url;
+                    resizedVideo.style.display = 'block';
+
+                    // Enable the download link
+                    const downloadLink = document.getElementById('download-link');
+                    downloadLink.href = data.resized_video_url;
+                    downloadLink.style.display = 'inline-block';
+                } else {
+                    alert('Error: ' + data.detail);
+                }
+            } catch (error) {
+                clearInterval(interval); // Stop progress simulation
+                loadingBarContainer.style.display = 'none'; // Hide the loading bar
+                console.error('Error:', error);
+                alert('Error resizing video');
+            }
+        });
+    </script>
+
+</body>
+</html>
