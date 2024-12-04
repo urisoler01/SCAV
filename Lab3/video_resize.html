@@ -91,7 +91,7 @@
     <video id="resized-video" controls style="display:none;"></video>
 
     <!-- Download Link for Resized Video -->
-    <a id="download-link" href="#" download="resized_video.mp4">Download Resized Video</a>
+    <a id="download-link" href="#">Download Resized Video</a>
 
     <script>
         // Show the uploaded video preview
@@ -156,7 +156,10 @@
 
                     // Enable the download link
                     const downloadLink = document.getElementById('download-link');
+                    const baseName = videoFile.name.split('.').slice(0, -1).join('.');
                     downloadLink.href = data.resized_video_url;
+                    const resolutionString = resolution.replace(":", "x");
+                    downloadLink.download = `${baseName}_${resolutionString}.mp4`;
                     downloadLink.style.display = 'inline-block';
                 } else {
                     alert('Error: ' + data.detail);

@@ -87,7 +87,7 @@
     <video id="subsampled-video" controls style="display:none;"></video>
 
     <!-- Download Link for Chroma Subsampled Video -->
-    <a id="download-link" href="#" download="subsampled_video.mp4">Download Subsampled Video</a>
+    <a id="download-link" href="#">Download Subsampled Video</a>
 
     <script>
         // Display the uploaded video preview
@@ -150,7 +150,10 @@
 
                     // Enable the download link
                     const downloadLink = document.getElementById('download-link');
+                    const baseName = videoFile.name.split('.').slice(0, -1).join('.');
                     downloadLink.href = data.chroma_subsampled_video_url;
+                    const samplingFactor = subsamplingFactor;
+                    downloadLink.download = `${baseName}_${samplingFactor}.mp4`;
                     downloadLink.style.display = 'inline-block';
                 } else {
                     alert('Error: ' + data.detail);
