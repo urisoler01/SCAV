@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chroma Subsampling</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            text-align: center;
+        }
+        h1 {
+            color: #2C3E50;
+        }
+        input[type="file"], select, button {
+            margin: 10px;
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+        button {
+            background-color: #2C3E50;
+            color: white;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #34495E;
+        }
+        video {
+            margin: 20px auto;
+            max-width: 90%;
+            display: block;
+        }
+        #download-link {
+            display: none;
+            margin-top: 20px;
+        }
+        #loading-bar-container {
+            display: none;
+            margin: 20px auto;
+            width: 100%;
+            max-width: 500px;
+            height: 10px;
+            background-color: #ddd;
+            border-radius: 5px;
+            overflow: hidden;
+        }
+        #loading-bar {
+            width: 0;
+            height: 100%;
+            background-color: #2C3E50;
+            transition: width 0.4s;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Chroma Subsampling</h1>
+
+    <!-- Video Upload Form -->
+    <form id="chroma-subsampling-form" enctype="multipart/form-data">
+        <label for="video-file">Select a video file:</label>
+        <input type="file" id="video-file" name="video" accept="video/*" required>
+
+        <label for="subsampling-factor">Choose subsampling format:</label>
+        <select id="subsampling-factor" name="subsampling_factor">
+            <option value="yuv420p">4:2:0 (Default)</option>
+            <option value="yuv422p">4:2:2</option>
+            <option value="yuv444p">4:4:4</option>
+        </select>
+
+        <button type="submit">Apply Chroma Subsampling</button>
+    </form>
+
+    <!-- Loading Bar -->
+    <div id="loading-bar-container">
+        <div id="loading-bar"></div>
+    </div>
+
+    <!-- Original Video Preview -->
+    <h3>Original Video</h3>
+    <video id="original-video" controls style="display:none;"></video>
+
+    <!-- Chroma Subsampled Video Preview -->
+    <h3>Chroma Subsampled Video</h3>
+    <video id="subsampled-video" controls style="display:none;"></video>
+
+    <!-- Download Link for Chroma Subsampled Video -->
+    <a id="download-link" href="#">Download Subsampled Video</a>
+
+    <script>
+        // Display the uploaded video preview
+        document.getElementById('video-file').addEventListener('change', function(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const url = URL.createObjectURL(file);
+                const originalVideo = document.getElementById('original-video');
+                originalVideo.src = url;
+                originalVideo.style.display = 'block';
+            }
+        });
+
+        // Handle the form submission for chroma subsampling
+        document.getElementById('chroma-subsampling-form').addEventListener('submit', async function(event) {
+            event.preventDefault();
+
+            const formData = new FormData();
+            const videoFile = document.getElementById('video-file').files[0];
+            const subsamplingFactor = document.getElementById('subsampling-factor').value;
+
+            if (!videoFile) {
+                alert("Please select a video file.");
+                return;
+            }
+
+            formData.append('video', videoFile);
+            formData.append('subsampling_factor', subsamplingFactor);
+
+            // Show the loading bar
+            const loadingBarContainer = document.getElementById('loading-bar-container');
+            const loadingBar = document.getElementById('loading-bar');
+            loadingBarContainer.style.display = 'block';
+            loadingBar.style.width = '0%';
+
+            // Simulate loading progress
+            let progress = 0;
+            const interval = setInterval(() => {
+                progress += Math.random() * 10;
+                loadingBar.style.width = `${Math.min(progress, 100)}%`;
+                if (progress >= 100) clearInterval(interval);
+            }, 500);
+
+            try {
+                const response = await fetch('/chroma_subsampling', {
+                    method: 'POST',
+                    body: formData,
+                });
+                const data = await response.json();
+
+                clearInterval(interval); // Stop progress simulation
+                loadingBar.style.width = '100%'; // Ensure the bar reaches 100%
+                loadingBarContainer.style.display = 'none'; // Hide the loading bar
+
+                if (data.success) {
+                    // Display the subsampled video
+                    const subsampledVideo = document.getElementById('subsampled-video');
+                    subsampledVideo.src = data.chroma_subsampled_video_url;
+                    subsampledVideo.style.display = 'block';
+
+                    // Enable the download link
+                    const downloadLink = document.getElementById('download-link');
+                    const baseName = videoFile.name.split('.').slice(0, -1).join('.');
+                    downloadLink.href = data.chroma_subsampled_video_url;
+                    const samplingFactor = subsamplingFactor;
+                    downloadLink.download = `${baseName}_${samplingFactor}.mp4`;
+                    downloadLink.style.display = 'inline-block';
+                } else {
+                    alert('Error: ' + data.detail);
+                }
+            } catch (error) {
+                clearInterval(interval); // Stop progress simulation
+                loadingBarContainer.style.display = 'none'; // Hide the loading bar
+                console.error('Error:', error);
+                alert('Error processing video');
+            }
+        });
+    </script>
+
+</body>
+</html>
