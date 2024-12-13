@@ -50,6 +50,13 @@ class RLEModel(BaseModel):
 class FileModel(BaseModel):
     file_name: str
 
+class EncoderModel(BaseModel):
+    function: str
+    parameter: str
+
+class LadderModel(FileModel):
+    encoiders: List[EncoderModel]
+
 # Serve the central navigation page
 @app.get("/", response_class=HTMLResponse)
 async def get_navigation():
@@ -135,6 +142,16 @@ async def get_index():
 @app.get("/yuv_histogram", response_class=HTMLResponse)
 async def get_index():
     with open("yuv_histogram.html") as f:
+        return HTMLResponse(content=f.read())
+
+@app.get("/convert", response_class=HTMLResponse)
+async def get_index():
+    with open("convert.html") as f:
+        return HTMLResponse(content=f.read())
+
+@app.get("/encoding_ladder", response_class=HTMLResponse)
+async def get_index():
+    with open("encoding_ladder.html") as f:
         return HTMLResponse(content=f.read())
 
 @app.post("/yuv_from_rgb")
@@ -385,6 +402,43 @@ async def yuv_histogram(video: UploadFile = File(...)):
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/convert")
+async def convert(video: UploadFile = File(...), codec: str = "libx265"):
+    try:
+        # Save the uploaded video to the server
+        input_video_path = UPLOAD_DIR / video.filename
+        with open(input_video_path, "wb") as buffer:
+            buffer.write(await video.read())
+
+        export_path = Image.convert(input_video_path, codec)
+
+        export_url = f"/output/{export_path.name}"
+        return {
+            "success": True,
+            "export_file_url": export_url
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/encodeing_ladder")
+async def encodeing_ladder(video: UploadFile = File(...), encoders: List[EncoderModel] = []):
+    try:
+        # Save the uploaded video to the server
+        input_video_path = UPLOAD_DIR / video.filename
+        with open(input_video_path, "wb") as buffer:
+            buffer.write(await video.read())
+
+        export_path = Image.encoding_ladder(encoders, input_video_path)
+
+        export_url = f"/output/{export_path.name}"
+        return {
+            "success": True,
+            "export_file_url": export_url
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 
 class Image:
     yuv_from_rgb_mat = np.array(
@@ -707,7 +761,46 @@ class Image:
 
         result = subprocess.run(command)
         if result.returncode != 0:
-            raise HTTPException(status_code=500, detail=f"FFmpeg error: {result.stderr.decode()}")
+            raise HTTPException(status_code=500, detail=f"FFmpeg error: {result.stderr}")
 
         return Path(out_path)
 
+
+    @staticmethod
+    def convert(input_video_path: Path, codec) -> Path:
+        # Get the absolute path based on the script's directory
+        script_dir = os.path.dirname(os.path.abspath(__file__)) #we must include the absolute path to work with any computer
+        abs_path = os.path.join(script_dir, input_video_path)
+
+        # Check if the file exists
+        if not os.path.isfile(abs_path):
+            raise HTTPException(status_code=500, detail=f"File {abs_path} not found")
+
+        out_path = OUTPUT_DIR / f"{input_video_path.stem}_converted.mp4"
+
+        command = ["ffmpeg", "-i", abs_path, "-c:v", codec, out_path, "-y"]
+
+        result = subprocess.run(command)
+        if result.returncode != 0:
+            raise HTTPException(status_code=500, detail=f"FFmpeg error: {result.stderr}")
+
+        return Path(out_path)
+
+    @staticmethod
+    def encoding_ladder(encoders, input_video_path):
+        export_path = input_video_path
+        for encoder in encoders:
+            match encoder.function:
+                case "convert":
+                    export_path = Image.convert(export_path, encoder.parameter)
+                case "resize":
+                    export_path = Image.video_resize(export_path, encoder.parameter)
+                case "subsampling":
+                    export_path = Image.chroma_subsampling(export_path, encoder.parameter)
+                case "yuvhist":
+                    export_path = Image.yuv_histogram(export_path)
+                case "motionvectors":
+                    export_path = Image.show_motionvectors(export_path)
+                case "container":
+                    export_path = Image.mp4_container(export_path)
+        return export_path

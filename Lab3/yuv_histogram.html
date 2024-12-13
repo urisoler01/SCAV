@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generate YUV Histogram</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            text-align: center;
+        }
+        h1 {
+            color: #2C3E50;
+        }
+        input[type="file"] {
+            margin: 20px;
+        }
+        button {
+            margin-top: 10px;
+            padding: 10px 20px;
+            background-color: #2C3E50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #34495E;
+        }
+        video {
+            display: block;
+            max-width: 100%;
+            margin: 20px auto;
+        }
+        #download-link {
+            display: none;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Generate YUV Histogram</h1>
+
+    <!-- video Upload Form -->
+    <form id="video-upload-form" enctype="multipart/form-data">
+        <label for="video-file">Choose an video file:</label>
+        <input type="file" id="video-file" name="video" accept="video/*" required>
+        <button type="submit" id="upload-button">Generate Histogram</button>
+    </form>
+
+    <!-- Preview of Original video -->
+    <h3>Original video Preview</h3>
+    <video id="original-video" controls style="display:none;">
+
+    <!-- Preview of YUV Histogram -->
+    <h3>YUV Histogram Preview</h3>
+    <video id="yuv-histogram" controls style="display:none;"></video>
+
+    <!-- Download Link for YUV Histogram -->
+    <a id="download-link" href="#">Download YUV Histogram</a>
+
+    <script>
+        // Show the uploaded video preview
+        document.getElementById('video-file').addEventListener('change', function(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const url = URL.createObjectURL(file);
+                const originalvideo = document.getElementById('original-video');
+                originalvideo.src = url;
+                originalvideo.style.display = 'block';
+            }
+        });
+
+        // Handle the form submission for generating the YUV histogram
+        document.getElementById('video-upload-form').addEventListener('submit', async function(event) {
+            event.preventDefault();
+
+            const videoFile = document.getElementById('video-file').files[0];
+            if (!videoFile) {
+                alert("Please select an video file.");
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('video', videoFile);
+
+            try {
+                const response = await fetch('/yuv_histogram', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+                if (response.ok && data.success) {
+                    // Display the YUV histogram preview
+                    const yuvHistogram = document.getElementById('yuv-histogram');
+                    yuvHistogram.src = data.export_file_url;
+                    yuvHistogram.style.display = 'block';
+
+                    // Set the download link
+                    const downloadLink = document.getElementById('download-link');
+                    const baseName = videoFile.name.split('.').slice(0, -1).join('.');
+                    downloadLink.href = data.export_file_url;
+                    downloadLink.download = `${baseName}_yuvhist.mp4`;
+                    downloadLink.style.display = 'inline-block';
+                } else {
+                    alert('Error: ' + (data.detail || 'Failed to generate YUV histogram.'));
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('An error occurred while generating the YUV histogram.');
+            }
+        });
+    </script>
+</body>
+</html>

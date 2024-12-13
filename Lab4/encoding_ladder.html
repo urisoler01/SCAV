@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Encoding Ladder</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            text-align: center;
+        }
+        h1 {
+            color: #2C3E50;
+        }
+        input[type="file"], select, button {
+            margin: 10px;
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+        button {
+            background-color: #2C3E50;
+            color: white;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #34495E;
+        }
+        .encoder-options {
+            text-align: left;
+            display: inline-block;
+            margin: 20px;
+        }
+        #download-link {
+            display: none;
+            margin-top: 20px;
+        }
+        #loading-bar-container {
+            display: none;
+            margin: 20px auto;
+            width: 100%;
+            max-width: 500px;
+            height: 10px;
+            background-color: #ddd;
+            border-radius: 5px;
+            overflow: hidden;
+        }
+        #loading-bar {
+            width: 0;
+            height: 100%;
+            background-color: #2C3E50;
+            transition: width 0.4s;
+        }
+    </style>
+</head>
+<body>
+
+<h1>Encoding Ladder</h1>
+
+<!-- Video Upload Form -->
+<form id="encoding-ladder-form" enctype="multipart/form-data">
+    <label for="video-file">Select a video file:</label>
+    <input type="file" id="video-file" name="video" accept="video/*" required>
+
+    <div class="encoder-options">
+        <h3>Encoders</h3>
+
+        <div>
+            <label for="encoder-function">Function:</label>
+            <select class="encoder-function" name="encoder_function">
+                <option value="convert">Convert</option>
+                <option value="resize">Resize</option>
+                <option value="subsampling">Chroma Subsampling</option>
+                <option value="yuvhist">YUV Histogram</option>
+                <option value="motionvectors">Motion Vectors</option>
+                <option value="container">MP4 Container</option>
+            </select>
+
+            <label for="encoder-parameter">Parameter:</label>
+            <input type="text" class="encoder-parameter" name="encoder_parameter" placeholder="Enter parameter">
+
+            <button type="button" class="add-encoder">Add Encoder</button>
+        </div>
+
+        <ul id="encoder-list">
+            <!-- List of selected encoders will appear here -->
+        </ul>
+    </div>
+
+    <button type="submit">Process Encoding Ladder</button>
+</form>
+
+<!-- Loading Bar -->
+<div id="loading-bar-container">
+    <div id="loading-bar"></div>
+</div>
+
+<!-- Download Link for Resulting Video -->
+<a id="download-link" href="#">Download Processed Video</a>
+
+<script>
+    const encoderList = [];
+    const encoderListElement = document.getElementById('encoder-list');
+
+    // Add encoder to the list
+    document.querySelector('.add-encoder').addEventListener('click', () => {
+        const functionSelect = document.querySelector('.encoder-function');
+        const parameterInput = document.querySelector('.encoder-parameter');
+        const functionValue = functionSelect.value;
+        const parameterValue = parameterInput.value;
+
+
+        const encoder = { function: functionValue, parameter: parameterValue };
+        encoderList.push(encoder);
+
+        const listItem = document.createElement('li');
+        listItem.textContent = `${functionValue} (${parameterValue})`;
+        encoderListElement.appendChild(listItem);
+
+        // Clear input
+        parameterInput.value = '';
+    });
+
+    // Handle form submission
+    document.getElementById('encoding-ladder-form').addEventListener('submit', async function(event) {
+        event.preventDefault();
+
+        const formData = new FormData();
+        const videoFile = document.getElementById('video-file').files[0];
+
+        if (!videoFile) {
+            alert("Please select a video file.");
+            return;
+        }
+
+        formData.append('video', videoFile);
+        formData.append('encoders', JSON.stringify(encoderList));
+
+        // Show the loading bar
+        const loadingBarContainer = document.getElementById('loading-bar-container');
+        const loadingBar = document.getElementById('loading-bar');
+        loadingBarContainer.style.display = 'block';
+        loadingBar.style.width = '0%';
+
+        // Simulate loading progress
+        let progress = 0;
+        const interval = setInterval(() => {
+            progress += Math.random() * 10;
+            loadingBar.style.width = `${Math.min(progress, 100)}%`;
+            if (progress >= 100) clearInterval(interval);
+        }, 500);
+
+        try {
+            const response = await fetch('/encodeing_ladder', {
+                method: 'POST',
+                body: formData,
+            });
+            const data = await response.json();
+
+            clearInterval(interval); // Stop progress simulation
+            loadingBar.style.width = '100%'; // Ensure the bar reaches 100%
+            loadingBarContainer.style.display = 'none'; // Hide the loading bar
+
+            if (data.success) {
+                // Enable the download link
+                const downloadLink = document.getElementById('download-link');
+                downloadLink.href = data.export_file_url;
+                downloadLink.download = videoFile.name.split('.')[0] + '_processed.mp4';
+                downloadLink.style.display = 'inline-block';
+            } else {
+                alert('Error: ' + data.detail);
+            }
+        } catch (error) {
+            clearInterval(interval); // Stop progress simulation
+            loadingBarContainer.style.display = 'none'; // Hide the loading bar
+            console.error('Error:', error);
+            alert('Error processing video');
+        }
+    });
+</script>
+
+</body>
+</html>
